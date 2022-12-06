@@ -1,16 +1,16 @@
 {
   "files": {
-    "main.css": "/idogmat.github.io/hw16/static/css/main.00c226fe.css",
-    "main.js": "/idogmat.github.io/hw16/static/js/main.8b1f24f7.js",
-    "static/js/787.f669ef33.chunk.js": "/idogmat.github.io/hw16/static/js/787.f669ef33.chunk.js",
-    "static/media/checked.svg": "/idogmat.github.io/hw16/static/media/checked.0b6a1bcf5d417ff0a947.svg",
-    "index.html": "/idogmat.github.io/hw16/index.html",
-    "main.00c226fe.css.map": "/idogmat.github.io/hw16/static/css/main.00c226fe.css.map",
-    "main.8b1f24f7.js.map": "/idogmat.github.io/hw16/static/js/main.8b1f24f7.js.map",
-    "787.f669ef33.chunk.js.map": "/idogmat.github.io/hw16/static/js/787.f669ef33.chunk.js.map"
+    "main.css": "/hw16/static/css/main.ec062ff3.css",
+    "main.js": "/hw16/static/js/main.b0c06f09.js",
+    "static/js/787.f669ef33.chunk.js": "/hw16/static/js/787.f669ef33.chunk.js",
+    "static/media/checked.svg": "/hw16/static/media/checked.0b6a1bcf5d417ff0a947.svg",
+    "index.html": "/hw16/index.html",
+    "main.ec062ff3.css.map": "/hw16/static/css/main.ec062ff3.css.map",
+    "main.b0c06f09.js.map": "/hw16/static/js/main.b0c06f09.js.map",
+    "787.f669ef33.chunk.js.map": "/hw16/static/js/787.f669ef33.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.00c226fe.css",
-    "static/js/main.8b1f24f7.js"
+    "static/css/main.ec062ff3.css",
+    "static/js/main.b0c06f09.js"
   ]
 }
