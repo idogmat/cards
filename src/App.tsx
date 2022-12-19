@@ -17,13 +17,18 @@ function App() {
   return (
       <div className={'App'}>
           <nav className={'navLinks'}>
-              {PATH.map(link=><NavLink to={link.path}>{link.point}</NavLink>)}
+              {PATH.map(link=><NavLink key={link.point} className={'navLink'} to={link.path}>{link.point}</NavLink>)}
           </nav>
+          <div className={'content'}>
         <Routes>
-            {PATH.map(route=><Route path={route.path} element={route.component}/>)}
 
-          <Route path={'/*'} element={<PageNotFound/>}/>
+                {PATH.map(route=><Route key={route.point} path={route.path} element={route.component}/>)}
+
+                <Route path={'/*'} element={<PageNotFound/>}/>
+
+
         </Routes>
+          </div>
       </div>
   );
 }
