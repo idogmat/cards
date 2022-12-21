@@ -4,9 +4,11 @@ import SuperButton from "../common/SuperButton/SuperButton";
 import {useFormik} from "formik";
 import {Button, FormControl, FormControlLabel, FormGroup, Grid, TextField} from "@mui/material";
 import SuperCheckbox from "../common/SuperCheckbox/SuperCheckbox";
-import {Route, useNavigate} from "react-router-dom";
+import {Navigate, Route, useNavigate} from "react-router-dom";
 import PageNotFound from "./PageNotFound";
 import Login from "./Login";
+import {useAppDispatch, useAppSelector} from "../store/store";
+import {registrationThunk} from "../store/authReducer";
 
 
 type FormikErrorType = {
@@ -15,7 +17,11 @@ type FormikErrorType = {
     repeatPassword?: string
 }
 const Registration = () => {
+    const dispatch = useAppDispatch()
     const navigate = useNavigate()
+    const isLogged = useAppSelector(state => state.auth.isLoggedIn)
+
+
     const formik = useFormik({
         initialValues: {
             email: '',
@@ -39,9 +45,12 @@ const Registration = () => {
         },
         onSubmit: (values, {resetForm}) => {
             console.log(values)
-            // dispatch(loginThunk(values))
+            dispatch(registrationThunk(values))
         },
     })
+    if(isLogged){
+        return <Navigate to={'/'}/>
+    }
     return <Grid container justifyContent={'center'}>
         <Grid item justifyContent={'center'}>
             <form onSubmit={formik.handleSubmit}>

@@ -4,7 +4,9 @@ import SuperButton from "../common/SuperButton/SuperButton";
 import SuperCheckbox from "../common/SuperCheckbox/SuperCheckbox";
 import {Button, FormControl, FormControlLabel, FormGroup, FormLabel, Grid, TextField} from "@mui/material";
 import {useFormik} from "formik";
-import {useNavigate} from "react-router-dom";
+import {Navigate, useNavigate} from "react-router-dom";
+import {loginThunk} from "../store/authReducer";
+import {useAppDispatch, useAppSelector} from "../store/store";
 
 type FormikErrorType = {
     email?: string
@@ -13,6 +15,10 @@ type FormikErrorType = {
 }
 const Login = () => {
     const navigate = useNavigate()
+    const dispatch = useAppDispatch()
+    const isLogged = useAppSelector(state => state.auth.isLoggedIn)
+
+
     const formik = useFormik({
         initialValues: {
             email: '',
@@ -33,9 +39,12 @@ const Login = () => {
         },
         onSubmit: (values, {resetForm}) => {
             console.log(values)
-            // dispatch(loginThunk(values))
+            dispatch(loginThunk(values))
         },
     })
+    if(isLogged){
+        return <Navigate to={'/'}/>
+    }
     return <Grid container justifyContent={'center'}>
         <Grid item justifyContent={'center'}>
             <form onSubmit={formik.handleSubmit}>
@@ -47,8 +56,6 @@ const Login = () => {
                         <TextField type="password" label="Password"
                                    margin="normal"
                                    {...formik.getFieldProps('password')}
-                            // name={'password'} onChange={formik.handleChange}
-                            // value={formik.values.password}
                         />
                         {formik.errors.password
                             && formik.touched.password
