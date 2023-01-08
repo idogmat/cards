@@ -1,10 +1,10 @@
 import React from "react";
 import { Grid, Paper, TextField, Typography } from "@mui/material";
 import { useFormik } from "formik";
-import { useAppDispatch } from "../../common/hooks/hooks";
 import Button from "@mui/material/Button/Button";
 import FormControl from "@mui/material/FormControl/FormControl";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAppDispatch } from "../../common/hooks";
 import { setNewPassword } from "./setNewPasswordThunk";
 
 const SetNewPassword = () => {
@@ -24,8 +24,7 @@ const SetNewPassword = () => {
       }
       return errors;
     },
-    onSubmit: async (values, { resetForm }) => {
-      console.log(values, params);
+    onSubmit: async (values) => {
       const res = await dispatch(
         setNewPassword({
           password: values.password,

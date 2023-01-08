@@ -1,8 +1,5 @@
-import axios, { AxiosError } from "axios";
-import { Dispatch } from "react";
-import { RegisterFormErrorFieldsType } from "../../features/Register/Register";
-import { FormikConfig, FormikProps } from "formik";
-type SetAppErrorActionType = any;
+import { AppAC } from "./../../app/appReducer";
+import { FormikProps } from "formik";
 
 export const defaultErrorMessage = "Some errors occurred";
 
@@ -10,15 +7,15 @@ export function hasError(form: FormikProps<any>, prop: string): boolean {
   return !!form.errors[prop] && !!form.touched[prop];
 }
 
-export const errorUtils = (
-  e: Error | AxiosError<{ error: string }>,
-  dispatch: Dispatch<SetAppErrorActionType>
-) => {
-  const err = e as Error | AxiosError<{ error: string }>;
-  if (axios.isAxiosError(err)) {
-    const error = err.response?.data ? err.response.data.error : err.message;
-    // dispatch(setAppErrorAC(error))
-  } else {
-    // dispatch(setAppErrorAC(`Native error ${err.message}`))
+export const errorHandlingThunk = async (thunkAPI: any, logic: Function) => {
+  thunkAPI.dispatch(AppAC.setIsLoading({ isLoading: true }));
+  try {
+    return await logic();
+  } catch (e: any) {
+    const error = e.response ? e.response.data.error : e.message;
+    thunkAPI.dispatch(AppAC.setError({ error }));
+    return thunkAPI.rejectWithValue({ error });
+  } finally {
+    thunkAPI.dispatch(AppAC.setIsLoading({ isLoading: false }));
   }
 };

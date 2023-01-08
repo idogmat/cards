@@ -10,35 +10,46 @@ import {
   Typography,
   TypographyProps,
 } from "@mui/material";
-import { useAllSelector, useAppDispatch } from "../../common/hooks/hooks";
+import { useAllSelector, useAppDispatch } from "../../common/hooks";
 import { Logout, PhotoCameraBackOutlined } from "@mui/icons-material";
-import { logOutTC } from "../Login/loginThunks";
+
 import { EditableText } from "../../common/components/EditableText/EditableText";
 import { userStateSelector } from "../User/selectors";
 import { updateUserInfoTC } from "./profileThunks";
+import { appStateSelect } from "../../app/selectors";
+import styles from "../../common/styles/common.module.css";
+import { Preloader } from "../../common/components/Preloader/Preloader";
+import { lime } from "@mui/material/colors";
+import { logOutTC } from "../Login/loginThunks";
 
 export const Profile = () => {
   const dispatch = useAppDispatch();
   const user = useAllSelector(userStateSelector);
-  const avatarPlaceholder =
-    "https://i0.wp.com/boingboing.net/wp-content/uploads/2020/06/IMG_20200602_082003_707.jpg?fit=1&resize=620%2C4000&ssl=1";
+  const { isLoading } = useAllSelector(appStateSelect);
 
   const handleLogout = () => {
     dispatch(logOutTC());
   };
 
   const changeNameHandler = (name: string) => {
-    dispatch(updateUserInfoTC({ name, avatar: user.avatar }));
+    if (user.name !== name) {
+      dispatch(updateUserInfoTC({ name, avatar: user.avatar }));
+    }
   };
 
   return (
     <Grid
       container
-      sx={{ height: "100%" }}
+      sx={{ height: "100vh" }}
       justifyContent={"center"}
       alignItems={"center"}
     >
       <Grid item sx={{ minWidth: "360px" }}>
+        {isLoading && (
+          <div className={styles.preventSending}>
+            <Preloader />
+          </div>
+        )}
         <Paper sx={{ padding: "25px 80px" }}>
           <Box
             sx={{
@@ -81,10 +92,14 @@ export const Profile = () => {
                     width: "100px",
                     height: "100px",
                     borderRadius: "50%",
+                    bgcolor: lime[400],
                   }}
                   alt={"ProfilePicture"}
-                  src={user.avatar ? user.avatar : avatarPlaceholder}
-                />
+
+                  // src={user.avatar ? user.avatar : avatarPlaceholder}
+                >
+                  {user.name[0]}
+                </Avatar>
               </Badge>
             </Box>
             <EditableText
@@ -93,6 +108,7 @@ export const Profile = () => {
               displayProps={
                 { variant: "subtitle1", component: "span" } as TypographyProps
               }
+              disabled={isLoading}
             />
 
             <Typography
@@ -122,6 +138,7 @@ export const Profile = () => {
                 fontWeight: 500,
               }}
               onClick={handleLogout}
+              disabled={isLoading}
             >
               <Logout fontSize={"small"} />
               Log out

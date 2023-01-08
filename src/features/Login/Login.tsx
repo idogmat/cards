@@ -3,6 +3,7 @@ import FormControl from "@mui/material/FormControl/FormControl";
 import FormGroup from "@mui/material/FormGroup/FormGroup";
 import {
   Checkbox,
+  CircularProgress,
   FormControlLabel,
   FormLabel,
   Grid,
@@ -14,21 +15,25 @@ import {
 } from "@mui/material";
 import { useFormik } from "formik";
 import { Link } from "react-router-dom";
-import { useAppDispatch } from "../../common/hooks/hooks";
 import { loginTC } from "./loginThunks";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import React, { useState } from "react";
 import { hasError } from "../../common/utils/errorHandlers";
+import { useAllSelector, useAppDispatch } from "../../common/hooks";
+import { validMail } from "../../common/utils/regExp";
+import { appStateSelect } from "../../app/selectors";
+import { Preloader } from "../../common/components/Preloader/Preloader";
+import styles from "../../common/styles/common.module.css";
 
 interface ILoginErrorType {
   email?: string;
   password?: string;
   rememberMe?: boolean;
 }
-type LoginFormErrorFieldsType = "email" | "password";
 
 export const Login = () => {
   const dispatch = useAppDispatch();
+  const { isLoading } = useAllSelector(appStateSelect);
   const [showPassword, setShowPassword] = useState(false);
 
   const loginForm = useFormik({
@@ -41,9 +46,7 @@ export const Login = () => {
       const errors: ILoginErrorType = {};
       if (!values.email) {
         errors.email = "Required";
-      } else if (
-        !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.email)
-      ) {
+      } else if (!validMail.test(values.email)) {
         errors.email = "Invalid email address";
       }
       if (values.password.length < 8) {
@@ -52,17 +55,12 @@ export const Login = () => {
       return errors;
     },
     onSubmit: (values, { resetForm }) => {
-      console.log(values);
       dispatch(loginTC(values));
     },
   });
-
   const changePasswordFieldType = () => setShowPassword((prev) => !prev);
   const passwordFieldType = showPassword ? "text" : "password";
   const loginHasError = hasError.bind(null, loginForm);
-  // const hasError = (prop: LoginFormErrorFieldsType) => {
-  //   return !!loginForm.errors[prop] && !!loginForm.touched[prop];
-  // };
   return (
     <Grid
       container
@@ -70,7 +68,21 @@ export const Login = () => {
       alignContent={"center"}
       sx={{ height: "100vh" }}
     >
-      <Grid item justifyContent={"center"} xs={3} sx={{ minWidth: "360px" }}>
+      <Grid
+        item
+        justifyContent={"center"}
+        xs={3}
+        sx={{
+          minWidth: "360px",
+          position: "relative",
+          pointerEvents: `${isLoading ? "none" : "auto"}`,
+        }}
+      >
+        {isLoading && (
+          <div className={styles.preventSending}>
+            <Preloader />
+          </div>
+        )}
         <Paper sx={{ padding: "35px" }}>
           <form onSubmit={loginForm.handleSubmit}>
             <FormControl sx={{ width: "100%", textAlign: "center" }}>
