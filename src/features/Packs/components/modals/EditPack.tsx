@@ -1,5 +1,5 @@
 import { Box, Checkbox, FormGroup, IconButton, TextField } from "@mui/material";
-import { memo, useEffect, useState } from "react";
+import { ChangeEvent, memo, useEffect, useState } from "react";
 import { useAllSelector, useAppDispatch } from "../../../../common/hooks";
 
 import Button from "@mui/material/Button/Button";
@@ -9,6 +9,12 @@ import { PhotoCamera } from "@mui/icons-material";
 import { packsModalsAC } from "../../packsModalsSlice";
 import { updateModalSelector } from "./modalsSelectors";
 import { updatePackTC } from "../../packsThunks";
+import {
+  _uploadHandler,
+  BACKEND_MAX_IMG_WEIGHT,
+  getImgBase64File,
+} from "../../../../common/utils/base64Converter";
+import { acceptableImgFormats } from "../../../../common/utils/regExp";
 
 interface IUpdatePack {
   name: string;
@@ -36,7 +42,11 @@ export const EditPack = memo(() => {
     );
 
   const updatePack = () => {
-    if (truePack?.name !== pack.name) {
+    if (
+      truePack?.name !== pack.name ||
+      truePack?.private !== pack.private ||
+      truePack?.deckCover !== pack.deckCover
+    ) {
       dispatch(updatePackTC({ id: pack._id, ...pack }));
     }
     handleClose();
@@ -51,10 +61,26 @@ export const EditPack = memo(() => {
     dispatch(packsModalsAC.editPackFields({ ...pack, private: !pack.private }));
   };
 
+  const handleChangeCover = async (e: ChangeEvent<HTMLInputElement>) => {
+    const fileAsString = await getImgBase64File(e, dispatch);
+    fileAsString &&
+      dispatch(
+        packsModalsAC.editPackFields({ ...pack, deckCover: fileAsString })
+      );
+  };
   return (
     <ModalBase open={isOpen} handleClose={handleClose} modalTitle={"Edit Pack"}>
       <Box>
         <FormGroup>
+          <img
+            src={pack.deckCover}
+            style={{
+              width: "100%",
+              height: "9.375rem",
+              objectFit: "cover",
+            }}
+            alt="deckCover"
+          />
           <TextField
             label="Name pack"
             variant="standard"
@@ -76,6 +102,7 @@ export const EditPack = memo(() => {
                 style={{ display: "none" }}
                 type="file"
                 accept={"image/*"}
+                onChange={(e) => handleChangeCover(e)}
               />
               <IconButton component="span" color={"primary"}>
                 <PhotoCamera />

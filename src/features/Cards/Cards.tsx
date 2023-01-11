@@ -9,7 +9,7 @@ import {
   cardsTotalCountSelector,
 } from "./selectors";
 import { useAllSelector, useAppDispatch } from "common/hooks";
-import { useLocation, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 import { BackTo } from "common/components/BackTo/BackTo";
 import { CardsAC } from "./cardsSlice";
@@ -21,9 +21,12 @@ import { IPackResponse } from "./../Packs/packsAPI";
 import { NotFoundElements } from "common/components/NotFoundElements/NotFoundElements";
 import { Preloader } from "common/components/Preloader/Preloader";
 import { TablePagination } from "common/components/TablePagination/TablePagination";
-import { appStateSelect } from "app/selectors";
+import { appStateSelector } from "app/selectors";
 import { getCardsTC } from "./cardsThunks";
+import { getItemFromLC } from "common/utils/localStorage";
+import { packsCardsPacksSelector } from "features/Packs/selectors";
 import { selectOptions } from "./Cards.data";
+import { setPacksTC } from "./../Packs/packsThunks";
 import styles from "common/styles/common.module.css";
 import { userStateSelector } from "../User/selectors";
 
@@ -33,11 +36,22 @@ export interface IFieldSort {
   field: string;
 }
 
+export interface ILocationState {
+  pack: IPackResponse;
+  previousURL: string;
+}
+
 export const Cards = React.memo(() => {
+  // Url & Query
+  const [searchParams, setSearchParams] = useSearchParams();
+  const params = Object.fromEntries(searchParams);
+  const { packID } = useParams();
+
   // Selectors
   const dispatch = useAppDispatch();
+
   const user = useAllSelector(userStateSelector);
-  const { isLoading } = useAllSelector(appStateSelect);
+  const { isLoading } = useAllSelector(appStateSelector);
 
   const cards = useAllSelector(cardsCardsSelector);
   const packUserId = useAllSelector(cardsPackOwnerSelector);
@@ -46,15 +60,11 @@ export const Cards = React.memo(() => {
   const pageCount = useAllSelector(cardsShowPerPageSelector);
   const cardQuestion = useAllSelector(cardsCardQuestionSelector);
 
-  // Url & Query
-  // const { packID } = useParams();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { state } = useLocation();
-  const previousURL = state ? state.previousURL : "";
-  const pack: IPackResponse = state ? state.pack : {};
-  const params = Object.fromEntries(searchParams);
-  console.log(pack);
-
+  // Vars
+  const backToState = getItemFromLC("backToState");
+  const previousURL = backToState?.previousURL || "packs";
+  const pack =
+    backToState?.pack || ({ name: "namePlaceholder" } as IPackResponse);
   // Local states
   const defaultSort = { direction: 0, field: "updated" };
   const [sort, setSort] = useState<IFieldSort>(defaultSort);
@@ -69,13 +79,14 @@ export const Cards = React.memo(() => {
     () => Math.ceil(cardsTotalCount / +pageCount),
     [pageCount, cardsTotalCount]
   );
+
   const isPageCountValid = selectOptions.some(
     (option) => option.value === +params.showPerPage
   );
 
   useEffect(() => {
     const model = {
-      cardsPack_id: pack._id,
+      cardsPack_id: packID,
       pageCount: isPageCountValid ? params.showPerPage : pageCount,
       page: params.currentPage || page,
       cardQuestion: params.search || cardQuestion,
@@ -154,39 +165,41 @@ export const Cards = React.memo(() => {
             <Preloader />
           </div>
         )}
-        <BackTo title={"Back to packs"} route={`/packs?${previousURL}`} />
-        <CardsHeader
-          isPackMine={isPackMine}
-          pack={pack}
-          setSearchRequest={changeSearchRequestHandler}
-          searchValue={cardQuestion || ""}
-          previousURL={previousURL}
-        />
-        {cards.length > 0 ? (
-          <>
-            <Box sx={{ marginBottom: 3 }}>
-              <CardsTable
-                cards={cards}
-                isPackMine={isPackMine}
-                sort={sort}
-                setSort={handleChangeSort}
-                isLoading={isLoading}
+        <>
+          <BackTo title={"Back to packs"} route={`/packs?${previousURL}`} />
+          <CardsHeader
+            isPackMine={isPackMine}
+            pack={pack}
+            setSearchRequest={changeSearchRequestHandler}
+            searchValue={cardQuestion || ""}
+            previousURL={previousURL}
+          />
+          {cards.length > 0 ? (
+            <>
+              <Box sx={{ marginBottom: 3 }}>
+                <CardsTable
+                  cards={cards}
+                  isPackMine={isPackMine}
+                  sort={sort}
+                  setSort={handleChangeSort}
+                  isLoading={isLoading}
+                />
+              </Box>
+              <TablePagination
+                title={"Cards"}
+                totalPages={totalPages}
+                elementsPerPage={pageCount}
+                changePageHandler={changePageHandler}
+                changeElementsPerPage={changeShowPerPage}
+                currentPage={page}
+                selectOptions={selectOptions}
               />
-            </Box>
-            <TablePagination
-              title={"Cards"}
-              totalPages={totalPages}
-              elementsPerPage={pageCount}
-              changePageHandler={changePageHandler}
-              changeElementsPerPage={changeShowPerPage}
-              currentPage={page}
-              selectOptions={selectOptions}
-            />
-          </>
-        ) : (
-          <NotFoundElements title={"Empty"} />
-        )}
-        <CardsModals pack={pack} />
+            </>
+          ) : (
+            <NotFoundElements title={"Empty"} />
+          )}
+          <CardsModals pack={pack} />
+        </>
       </Box>
     </Box>
   );

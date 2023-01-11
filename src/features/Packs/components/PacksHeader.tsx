@@ -3,10 +3,11 @@ import { Box, Container, Toolbar } from "@mui/material";
 import { Search } from "../../../common/components/Search/Search";
 import FormControl from "@mui/material/FormControl/FormControl";
 import Button from "@mui/material/Button/Button";
-import SuperRange from "./SuperRange";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import { useAppDispatch } from "../../../common/hooks";
 import { packsModalsAC } from "../packsModalsSlice";
+import RangeSlider from "../../../common/components/RangeSlider/RangeSlider";
+import { IParams } from "../packsThunks";
 
 interface IHeaderProps {
   packName: string;
@@ -17,7 +18,8 @@ interface IHeaderProps {
   maxCardsCount: number;
   max: number | string;
   min: number | string;
-  changeRangeHandler: (valueRange: number[]) => void;
+  changeRangeHandler: (valueRange: number[], params: any) => void;
+  params: IParams;
   removeSort: () => void;
 }
 const PacksHeader: FC<IHeaderProps> = React.memo(
@@ -32,6 +34,7 @@ const PacksHeader: FC<IHeaderProps> = React.memo(
     maxCardsCount,
     minCardsCount,
     handlerIsMyPack,
+    params,
   }) => {
     const dispatch = useAppDispatch();
     const modalAddPack = () =>
@@ -79,12 +82,13 @@ const PacksHeader: FC<IHeaderProps> = React.memo(
               </Button>
             </FormControl>
 
-            <SuperRange
+            <RangeSlider
               max={max}
               min={min}
               minCardsCount={minCardsCount}
               maxCardsCount={maxCardsCount}
               onChangeSlider={changeRangeHandler}
+              params={params}
             />
             <Button variant="contained" onClick={modalAddPack}>
               Add new Pack

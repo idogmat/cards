@@ -2,15 +2,15 @@ import { Box, Checkbox, FormGroup, IconButton, TextField } from "@mui/material";
 import React, { ChangeEvent, useState } from "react";
 import { useAllSelector, useAppDispatch } from "../../../../common/hooks";
 
-import Button from "@mui/material/Button/Button";
+import Button from "@mui/material/Button";
 import { ModalBase } from "../../../../common/components/Modal";
 import { PhotoCamera } from "@mui/icons-material";
 import { addNewModalSelector } from "./modalsSelectors";
 import { addPackTC } from "../../packsThunks";
 import { packsModalsAC } from "../../packsModalsSlice";
-import { uploadHandler } from "../../../../common/utils/loadPhoto";
+import { getImgBase64File } from "../../../../common/utils/base64Converter";
 
-interface INewPack {
+export interface INewPack {
   name: string;
   deckCover: string;
   isPrivate: boolean;
@@ -34,8 +34,11 @@ export const AddNewPack = React.memo(() => {
     dispatch(packsModalsAC.setAddPackState({ status: false }));
 
   const addNewPack = () => {
-    dispatch(addPackTC(newPackData));
-    handleClose();
+    if (newPackData.name) {
+      dispatch(addPackTC(newPackData));
+      setNewPackData({} as INewPack);
+      handleClose();
+    }
   };
 
   const handleChangeName = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,8 +49,11 @@ export const AddNewPack = React.memo(() => {
   const handleChangeIsPrivate = () => {
     setNewPackData((state) => ({ ...state, isPrivate: !state.isPrivate }));
   };
-  const handleChangeCover = (fileAsString: string) => {
-    setNewPackData((state) => ({ ...state, deckCover: fileAsString }));
+
+  const handleChangeCover = async (e: ChangeEvent<HTMLInputElement>) => {
+    const fileAsString = await getImgBase64File(e, dispatch);
+    fileAsString &&
+      setNewPackData((state) => ({ ...state, deckCover: fileAsString }));
   };
 
   return (
@@ -58,6 +64,17 @@ export const AddNewPack = React.memo(() => {
     >
       <Box>
         <FormGroup>
+          {newPackData.deckCover && (
+            <img
+              src={newPackData.deckCover}
+              style={{
+                width: "100%",
+                height: "9.375rem",
+                objectFit: "cover",
+              }}
+              alt="deckCover"
+            />
+          )}
           <TextField
             label="Name pack"
             variant="standard"
@@ -79,7 +96,7 @@ export const AddNewPack = React.memo(() => {
                 style={{ display: "none" }}
                 type="file"
                 accept={"image/*"}
-                onChange={(e) => uploadHandler(e, handleChangeCover)}
+                onChange={(e) => handleChangeCover(e)}
               />
               <IconButton component="span" color={"primary"}>
                 <PhotoCamera />

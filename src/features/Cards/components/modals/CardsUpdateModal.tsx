@@ -1,13 +1,18 @@
+import { ChangeEvent, FC, useRef } from "react";
+import { _uploadHandler, getImgBase64File } from "common/utils/base64Converter";
 import { useAllSelector, useAppDispatch } from "common/hooks";
 
 import Box from "@mui/material/Box/Box";
 import Button from "@mui/material/Button/Button";
 import { CardsModalsAC } from "features/Cards/cardsModalsSlice";
-import { FC } from "react";
+import { FieldFormatsEnum } from "./FormatSelect";
 import FormControl from "@mui/material/FormControl/FormControl";
 import FormGroup from "@mui/material/FormGroup/FormGroup";
 import { ModalBase } from "common/components/Modal";
-import TextField from "@mui/material/TextField/TextField";
+import { SelectChangeEvent } from "@mui/material";
+import { SelectTypeField } from "./SelectTypeField";
+import { formatSelectOptions } from "./CardsModals.data";
+import { openFileSelector } from "./utils";
 import { updateCardModalSelector } from "features/Cards/components/modals/modalsSelectors";
 import { updateCardTC } from "features/Cards/cardsThunks";
 
@@ -16,43 +21,127 @@ interface IUpdateCardModalProps {
 }
 
 export const CardsUpdateModal: FC<IUpdateCardModalProps> = ({ packID }) => {
+  const isFieldPicture = (field: string) => {
+    return field === FieldFormatsEnum.pictureFormat;
+  };
+
   // dispatch & selectors
   const dispatch = useAppDispatch();
-  const { cardID, question, answer, isOpen } = useAllSelector(
-    updateCardModalSelector
-  );
-  const trueCard = useAllSelector((state) =>
-    state.cards.cards.find((c) => c._id === cardID)
-  );
+
+  const updateModal = useAllSelector(updateCardModalSelector);
+
+  const {
+    isOpen,
+    card,
+    question,
+    answer,
+    questionImg,
+    answerImg,
+    questionFieldType,
+    answerFieldType,
+  } = updateModal;
+
+  // Vars
+  const isSameCard =
+    card.question === question &&
+    card.answer === answer &&
+    card.answerImg === answerImg &&
+    card.questionImg === questionImg;
+
+  const textQuestion = question === "undefined" ? "" : question;
+  const textAnswer = answer === "undefined" ? "" : answer;
+
+  const questionFileInput = useRef<HTMLInputElement>(null);
+  const answerFileInput = useRef<HTMLInputElement>(null);
+
+  const isQuestionPicture = isFieldPicture(questionFieldType);
+  const isAnswerPicture = isFieldPicture(answerFieldType);
 
   // Utils
 
   const handleClose = () =>
     dispatch(CardsModalsAC.setUpdateCardState({ state: false }));
 
-  const setAnswer = (e: React.ChangeEvent<HTMLInputElement>) =>
+  const setAnswer = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const answer = e.target.value;
     dispatch(
-      CardsModalsAC.setUpdateCardAnswer({ answer: e.currentTarget.value })
+      CardsModalsAC.setUpdateCardData({ model: { ...updateModal, answer } })
     );
-  const setQuestion = (e: React.ChangeEvent<HTMLInputElement>) =>
+  };
+
+  const setQuestion = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const question = e.target.value;
     dispatch(
-      CardsModalsAC.setUpdateCardQuestion({ question: e.currentTarget.value })
+      CardsModalsAC.setUpdateCardData({ model: { ...updateModal, question } })
     );
+  };
+
+  const changeQuestionFormat = (e: SelectChangeEvent) => {
+    const questionFieldType = e.target.value as FieldFormatsEnum;
+    dispatch(
+      CardsModalsAC.setUpdateCardData({
+        model: { ...updateModal, questionFieldType },
+      })
+    );
+  };
+
+  const changeAnswerFormat = (e: SelectChangeEvent) => {
+    const answerFieldType = e.target.value as FieldFormatsEnum;
+    dispatch(
+      CardsModalsAC.setUpdateCardData({
+        model: { ...updateModal, answerFieldType },
+      })
+    );
+  };
+
+  const changeQuestionCover = async (e: ChangeEvent<HTMLInputElement>) => {
+    const questionImg = await getImgBase64File(e, dispatch);
+    if (questionImg) {
+      dispatch(
+        CardsModalsAC.setUpdateCardData({
+          model: { ...updateModal, questionImg },
+        })
+      );
+    }
+  };
+
+  const changeAnswerCover = async (e: ChangeEvent<HTMLInputElement>) => {
+    const answerImg = await getImgBase64File(e, dispatch);
+    if (answerImg) {
+      dispatch(
+        CardsModalsAC.setUpdateCardData({
+          model: { ...updateModal, answerImg },
+        })
+      );
+    }
+  };
 
   const updateCardHandler = () => {
-    if (answer === trueCard?.answer && question === trueCard?.question) {
+    if (isSameCard) {
       handleClose();
-    } else {
-      const model = {
-        card: {
-          _id: cardID,
-          question,
-          answer,
-        },
-      };
-      dispatch(updateCardTC({ packID, model }));
-      handleClose();
+      return;
     }
+
+    const questionField = isQuestionPicture ? "questionImg" : "question";
+    const answerField = isAnswerPicture ? "answerImg" : "answer";
+
+    const questionNull = isQuestionPicture ? "question" : "questionImg";
+    const answerNull = isAnswerPicture ? "answer" : "answerImg";
+
+    const questionResult = isQuestionPicture ? questionImg : textQuestion;
+    const answerResult = isAnswerPicture ? answerImg : textAnswer;
+
+    const model = {
+      card: {
+        _id: card._id,
+        [questionField]: questionResult,
+        [answerField]: answerResult,
+        [questionNull]: "undefined",
+        [answerNull]: "undefined",
+      },
+    };
+    dispatch(updateCardTC({ packID, model }));
+    handleClose();
   };
 
   return (
@@ -60,18 +149,29 @@ export const CardsUpdateModal: FC<IUpdateCardModalProps> = ({ packID }) => {
       <ModalBase handleClose={handleClose} modalTitle="Edit card" open={isOpen}>
         <Box sx={{ padding: 2 }}>
           <FormGroup sx={{ display: "grid", gap: 1 }}>
-            <TextField
-              label="Enter the new question"
-              variant="standard"
-              value={question}
-              onChange={setQuestion}
+            <SelectTypeField
+              selectTitle={"Choose question format"}
+              options={formatSelectOptions}
+              changeOption={changeQuestionFormat}
+              fieldFormat={questionFieldType}
+              fileInputRef={questionFileInput}
+              openFileSelector={() => openFileSelector(questionFileInput)}
+              cover={questionImg}
+              textFieldValue={textQuestion}
+              changeTextFieldValue={setQuestion}
+              handleFileUpload={changeQuestionCover}
             />
-            <TextField
-              variant="standard"
-              label="Enter the new answer"
-              value={answer}
-              onChange={setAnswer}
-              sx={{ marginBottom: 3 }}
+            <SelectTypeField
+              selectTitle={"Choose answer format"}
+              options={formatSelectOptions}
+              changeOption={changeAnswerFormat}
+              fieldFormat={answerFieldType}
+              fileInputRef={answerFileInput}
+              openFileSelector={() => openFileSelector(answerFileInput)}
+              cover={answerImg}
+              textFieldValue={textAnswer}
+              changeTextFieldValue={setAnswer}
+              handleFileUpload={changeAnswerCover}
             />
             <FormControl>
               <Button
@@ -79,7 +179,7 @@ export const CardsUpdateModal: FC<IUpdateCardModalProps> = ({ packID }) => {
                 sx={{ alignSelf: "start" }}
                 onClick={updateCardHandler}
               >
-                Add new pack
+                Confirm edit
               </Button>
             </FormControl>
           </FormGroup>
